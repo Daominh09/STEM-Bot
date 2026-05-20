@@ -7,13 +7,28 @@ import Image from 'next/image';
 import AuthContext from '@/context/AuthContext';
 
 const LoginForm: React.FC = () => {
-  const { login } = useContext(AuthContext);
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    throw new Error('LoginForm must be used within an AuthProvider');
+  }
+  const { login } = authContext;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login(email, password);
+    setError('');
+    setLoading(true);
+    try {
+      await login(email, password);
+    } catch (err: any) {
+      const detail = err.response?.data?.detail;
+      setError(detail ?? 'Invalid email or password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,6 +40,10 @@ const LoginForm: React.FC = () => {
       />
       <h1 className="text-2xl font-semibold text-gray-900 mb-1">STEM Bot</h1>
       <h2 className="text-lg font-medium text-gray-800 mb-6">Login</h2>
+
+      {error && (
+        <p className="text-sm text-red-600 mb-4">{error}</p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -49,13 +68,14 @@ const LoginForm: React.FC = () => {
           type="submit"
           variant="primary"
           className="w-full bg-green-600 hover:bg-green-700"
+          disabled={loading}
         >
-          Log in
+          {loading ? 'Logging in...' : 'Log in'}
         </Button>
       </form>
 
       <p className="text-sm text-gray-700 mt-4">
-        Don’t have an account?{' '}
+        Don't have an account?{' '}
         <Link href="/signup" className="text-green-500 hover:underline">
           Create account
         </Link>

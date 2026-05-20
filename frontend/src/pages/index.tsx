@@ -1,5 +1,6 @@
 import { NextPage } from 'next';
 import Head from 'next/head';
+import Link from 'next/link';
 import Header from '../components/Header';
 import Demo from '../components/Demo';
 import Features from '../components/Features';
@@ -26,9 +27,9 @@ const Home: NextPage = () => (
           <p className="text-gray-700 mb-6">
             Chat with our AI assistant to learn about science, technology, engineering, and math.
           </p>
-          <button className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+          <Link href="/chat" className="inline-block px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg">
             Get Started
-          </button>
+          </Link>
         </div>
         <div className="md:w-1/2 flex items-center justify-center px-6 mt-8 md:mt-0">
           <Image

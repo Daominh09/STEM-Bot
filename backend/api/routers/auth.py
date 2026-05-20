@@ -30,7 +30,6 @@ class Token(BaseModel):
 
 def authenticate_user(email:str, password: str, db):
     user = db.query(User).filter(User.email == email).first()
-    print(user)
     if not user:
         return False
     if not bcrypt_context.verify(password, user.hashed_password):
@@ -46,7 +45,7 @@ def create_access_token(email: str, user_id: int, expires_delta: timedelta):
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(
     create_user_request: UserCreateRequest,
-    db = Depends(db_dependency)):
+    db: db_dependency):
 
     create_user_model = User(
         name=create_user_request.name,
@@ -56,11 +55,10 @@ async def create_user(
     db.add(create_user_model)
     db.commit()
 
-@router.post('/login', response_model=Token)
-
+@router.post('/token', response_model=Token)
 async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
-    db = Depends(db_dependency)):
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: db_dependency):
 
     user = authenticate_user(form_data.username, form_data.password, db)
     credentials_exception = HTTPException(

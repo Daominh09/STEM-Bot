@@ -1,7 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth
+from routers import auth, chats, documents
+from modules.chatbot import RAGChatbot
+from utils.load_config import load_config
+from logger import logger
 from database import Base, engine
+import app_state
+
+
+chat_dep, embed_dep = load_config()
+app_state.chatbot = RAGChatbot(chat_dep, embed_dep)
+
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
@@ -13,34 +23,18 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-# # Pydantic schemas
-# class UserBase(BaseModel):
-#     name: Optional[str]
-#     email: EmailStr
-#     password: str
+@app.middleware("http")
+async def catch_exception_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        logger.exception("UNHANDLE EXCEPTION")
+        return JSONResponse(status_code=500, content={"error": str(exc)})
 
-# class ChatBase(BaseModel):
-#     user_id: int
-#     # Optional: title or metadata
-#     title: Optional[str] = None
-
-# class MessageBase(BaseModel):
-#     chat_id: int
-#     sender: str  # 'user' or 'bot'
-#     content: str
-
-# def get_db():
-#     db = Session()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
-
-
-# db_dependency = Annotated(Session, Depends(get_db))
-# Health check endpoint
 @app.get("/")
 def health_check() -> str:
     return 'Health check complete'
 
 app.include_router(auth.router)
+app.include_router(chats.router)
+app.include_router(documents.router)
